@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('notas', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('titulo'); // Cambiado 'title' a 'titulo'
+            $table->text('contenido'); // Cambiado 'content' a 'contenido'
+            $table->softDeletes(); // Habilitar eliminaciones lógicas
             $table->timestamps();
         });
     }
