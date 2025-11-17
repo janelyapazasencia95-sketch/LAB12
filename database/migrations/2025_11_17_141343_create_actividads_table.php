@@ -10,18 +10,19 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('actividads', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('actividades', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('nota_id')->constrained()->onDelete('cascade');
+        $table->string('titulo');
+        $table->text('descripcion')->nullable();
+        $table->boolean('completado')->default(false);
+        $table->timestamps();
+    });
+}
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('actividads');
-    }
+public function down(): void
+{
+    Schema::dropIfExists('actividades');
+}
 };
