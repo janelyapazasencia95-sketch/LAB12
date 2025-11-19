@@ -39,21 +39,41 @@
                 <div class="row mb-3">
                     <label for="titulo" class="col-md-3 col-form-label">Título Nota</label>
                     <div class="col-md-9">
-                        <input type="text" name="titulo" id="titulo" class="form-control" placeholder="Ej. Comprar libros" required>
+                        <input
+                            type="text"
+                            name="titulo"
+                            id="titulo"
+                            class="form-control"
+                            placeholder="Ej. Comprar libros"
+                            required
+                        >
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <label for="contenido" class="col-md-3 col-form-label">Contenido</label>
                     <div class="col-md-9">
-                        <textarea name="contenido" id="contenido" rows="3" class="form-control" placeholder="Detalles de la nota..." required></textarea>
+                        <textarea
+                            name="contenido"
+                            id="contenido"
+                            rows="3"
+                            class="form-control"
+                            placeholder="Detalles de la nota..."
+                            required
+                        ></textarea>
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <label for="fecha_vencimiento" class="col-md-3 col-form-label">Fecha Vencimiento</label>
                     <div class="col-md-9">
-                        <input type="datetime-local" name="fecha_vencimiento" id="fecha_vencimiento" class="form-control" required>
+                        <input
+                            type="datetime-local"
+                            name="fecha_vencimiento"
+                            id="fecha_vencimiento"
+                            class="form-control"
+                            required
+                        >
                     </div>
                 </div>
 
@@ -69,26 +89,70 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><strong>Usuario:</strong> {{ $user->name }}</span>
-                <span class="badge bg-info text-dark">{{ $user->total_notas }} Active Notes</span>
+                <span class="badge bg-info text-dark">
+                    {{ $user->total_notas ?? $user->notas->count() }} Active Notes
+                </span>
             </div>
             <div class="card-body">
                 @forelse ($user->notas as $nota)
                     <div class="border rounded p-3 mb-3">
-                        <h5 class="{{ $nota->recordatorio->completado ? 'text-decoration-line-through text-muted' : '' }}">
-                            {{ $nota->titulo_formateado }}
-                        </h5>
-                        <p>{{ $nota->contenido }}</p>
-                        <small class="text-muted">
-                            <strong>Due:</strong> {{ \Carbon\Carbon::parse($nota->recordatorio->fecha_vencimiento)->format('Y-m-d H:i') }}
-                            @if($nota->recordatorio->completado)
-                                <span class="badge bg-success ms-2">Completed</span>
-                            @else
-                                <span class="badge bg-warning text-dark ms-2">Pending</span>
-                            @endif
-                        </small>
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="{{ optional($nota->recordatorio)->completado ? 'text-decoration-line-through text-muted' : '' }}">
+                                    {{ $nota->titulo_formateado ?? $nota->titulo }}
+                                </h5>
+
+                                <p class="mb-1">
+                                    {{ \Illuminate\Support\Str::limit($nota->contenido, 80) }}
+                                </p>
+
+                                <small class="text-muted d-block">
+                                    <strong>Due:</strong>
+                                    @if($nota->recordatorio)
+                                        {{ \Carbon\Carbon::parse($nota->recordatorio->fecha_vencimiento)->format('Y-m-d H:i') }}
+                                    @else
+                                        Sin recordatorio
+                                    @endif
+
+                                    @if(optional($nota->recordatorio)->completado)
+                                        <span class="badge bg-success ms-2">Completed</span>
+                                    @else
+                                        <span class="badge bg-warning text-dark ms-2">Pending</span>
+                                    @endif
+
+                                    <span class="badge bg-secondary ms-2">
+                                        Actividades: {{ $nota->actividades->count() }}
+                                    </span>
+                                </small>
+                            </div>
+
+                            <div class="ms-3 text-end">
+                                <a href="{{ route('notas.show', $nota) }}" class="btn btn-sm btn-outline-secondary mb-1">
+                                    Ver
+                                </a>
+                                <a href="{{ route('notas.edit', $nota) }}" class="btn btn-sm btn-outline-primary mb-1">
+                                    Editar
+                                </a>
+                                <form
+                                    action="{{ route('notas.destroy', $nota) }}"
+                                    method="POST"
+                                    class="d-inline"
+                                >
+                                    @csrf
+                                    @method('DELETE')
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('¿Eliminar nota y todo lo asociado?')"
+                                    >
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 @empty
-                    <p class="text-muted">No hay notas activas.</p>
+                    <p class="text-muted mb-0">No hay notas activas.</p>
                 @endforelse
             </div>
         </div>
