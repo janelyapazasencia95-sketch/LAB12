@@ -9,25 +9,22 @@ use Illuminate\Http\Request;
 class NotaController extends Controller
 {
     /**
-     * Listar usuarios con sus notas, recordatorios y actividades.
-     * Esta acción carga la vista resources/views/notas/index.blade.php
+     * Listar usuarios con sus notas.
      */
     public function index()
     {
-        // Trae todos los usuarios con sus notas, recordatorio y actividades
         $users = User::with([
                 'notas.recordatorio',
                 'notas.actividades',
             ])
-            ->withCount('notas as total_notas') // para el badge de "Active Notes"
+            ->withCount('notas as total_notas')
             ->get();
 
         return view('notas.index', compact('users'));
     }
 
     /**
-     * Guardar una nueva nota con su recordatorio.
-     * (Formulario está en la misma vista index)
+     * Guardar nueva nota.
      */
     public function store(Request $request)
     {
@@ -38,14 +35,17 @@ class NotaController extends Controller
             'fecha_vencimiento' => 'required|date|after:now',
         ]);
 
-        // Crear la nota
+        // Evitar que un usuario cree notas a nombre de otros
+        if ($request->user_id != auth()->id()) {
+            abort(403, 'No puedes crear notas para otro usuario.');
+        }
+
         $nota = Nota::create([
             'user_id'   => $request->user_id,
             'titulo'    => $request->titulo,
             'contenido' => $request->contenido,
         ]);
 
-        // Crear el recordatorio asociado
         $nota->recordatorio()->create([
             'fecha_vencimiento' => $request->fecha_vencimiento,
             'completado'        => false,
@@ -57,7 +57,7 @@ class NotaController extends Controller
     }
 
     /**
-     * Mostrar detalle de una nota.
+     * Mostrar detalle.
      */
     public function show(Nota $nota)
     {
@@ -67,20 +67,30 @@ class NotaController extends Controller
     }
 
     /**
-     * Formulario de edición de una nota.
+     * Formulario de edición.
      */
     public function edit(Nota $nota)
     {
+        // 🔒 Seguridad
+        if ($nota->user_id !== auth()->id()) {
+            abort(403, 'No tienes permiso para editar esta nota.');
+        }
+
         $nota->load('recordatorio');
 
         return view('notas.edit', compact('nota'));
     }
 
     /**
-     * Actualizar una nota y su recordatorio.
+     * Actualizar nota.
      */
     public function update(Request $request, Nota $nota)
     {
+        // 🔒 Seguridad
+        if ($nota->user_id !== auth()->id()) {
+            abort(403, 'No tienes permiso para actualizar esta nota.');
+        }
+
         $request->validate([
             'titulo'            => 'required|string|max:255',
             'contenido'         => 'required|string',
@@ -109,14 +119,19 @@ class NotaController extends Controller
     }
 
     /**
-     * Eliminar nota (recordatorio y actividades se eliminan en cascada).
+     * Eliminar nota.
      */
     public function destroy(Nota $nota)
     {
+        // 🔒 Seguridad
+        if ($nota->user_id !== auth()->id()) {
+            abort(403, 'No tienes permiso para eliminar esta nota.');
+        }
+
         $nota->delete();
 
         return redirect()
             ->route('notas.index')
-            ->with('success', 'Nota eliminada correctamente junto con su recordatorio y actividades.');
+            ->with('success', 'Nota eliminada correctamente.');
     }
 }
