@@ -32,7 +32,7 @@
             <label>Fecha de vencimiento del recordatorio</label><br>
             <input type="datetime-local"
                    name="fecha_vencimiento"
-                   value="{{ old('fecha_vencimiento', optional($nota->recordatorio)->fecha_vencimiento ? $nota->recordatorio->fecha_vencimiento->format('Y-m-d\TH:i') : '') }}"
+                   value="{{ old('fecha_vencimiento', optional($nota->recordatorio->fecha_vencimiento)->format('Y-m-d\TH:i')) }}"
                    required>
         </div>
 
